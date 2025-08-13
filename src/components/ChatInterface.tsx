@@ -62,7 +62,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ 
+          message,
+          storeId: 'demo-store',
+          userId: 'demo-user'
+        }),
         signal: abortControllerRef.current.signal
       })
 
