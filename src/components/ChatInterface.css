@@ -3,7 +3,7 @@
 .chat-interface {
   display: flex;
   flex-direction: column;
-  height: 50vh;
+  height: 80vh;
   max-width: 500px;
   margin: 0 auto;
   background: #ffffff;
@@ -30,6 +30,91 @@
   margin: 0.5rem 0 0 0;
   opacity: 0.9;
   font-size: 0.9rem;
+}
+
+/* 모드 선택 버튼 */
+.mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.mode-button {
+  padding: 0.5rem 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-button:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mode-button.active {
+  background: white;
+  color: #4f46e5;
+  border-color: white;
+}
+
+.mode-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 블록 생성 입력 폼 */
+.block-inputs {
+  margin-top: 1rem;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group:last-child {
+  grid-column: 1 / -1;
+}
+
+.input-group label {
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.input-group input {
+  padding: 0.4rem 0.6rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  box-sizing: border-box;
+}
+
+.input-group input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.input-group input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* 메시지 영역 */
@@ -139,6 +224,66 @@
 .source-score {
   color: #9ca3af;
   font-size: 0.75rem;
+}
+
+/* 블록 데이터 표시 */
+.block-data {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.block-data h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.block-info {
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.block-info p {
+  margin: 0.25rem 0;
+}
+
+.block-info details {
+  margin-top: 0.5rem;
+}
+
+.block-info summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: #4f46e5;
+  margin-bottom: 0.5rem;
+}
+
+.block-info summary:hover {
+  color: #4338ca;
+}
+
+.block-code, .block-settings {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.block-code {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.block-settings {
+  max-height: 150px;
+  overflow-y: auto;
 }
 
 /* 상태 표시 */
@@ -313,6 +458,24 @@
   .input-buttons {
     flex-direction: row;
     justify-content: flex-end;
+  }
+  
+  .mode-selector {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .mode-button {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .block-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .input-group:last-child {
+    grid-column: 1;
   }
 }
 
