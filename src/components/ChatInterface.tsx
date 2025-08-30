@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react'
-import type { ChatMessage, ChatStatus, StreamingEvent, ChatMode, BlockRequest, BlockResponse, BlockErrorResponse, BlockStreamingEvent, BlockSSERequest } from '../types'
+import type { ChatMessage, ChatStatus, StreamingEvent, ChatMode, BlockRequest, BlockResponse, BlockErrorResponse, BlockStreamingEvent, BlockSSERequest, DocumentSource, BlockData } from '../types'
 import './ChatInterface.css'
 
 const API_BASE_URL = 'http://localhost:8000/api/chat'
 const BLOCKS_API_BASE_URL = 'http://localhost:8000/api/blocks'
 
-interface ChatInterfaceProps {}
+interface ChatInterfaceProps {
+  // Component props can be added here if needed
+}
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -35,7 +37,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
 
   // CUID 생성 함수 (간단한 버전)
   const generateCUID = () => {
-    return 'c' + Date.now().toString(36) + Math.random().toString(36).substr(2)
+    return 'c' + Date.now().toString(36) + Math.random().toString(36).substring(2)
   }
 
   // 메시지 전송 함수
@@ -112,7 +114,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
 
       const assistantMessageId = Date.now().toString()
       let assistantMessage = ''
-      let sources: any[] = []
+      let sources: DocumentSource[] = []
 
       while (true) {
         const { done, value } = await reader.read()
@@ -168,7 +170,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
                 case 'error':
                   throw new Error(event.content || '알 수 없는 오류가 발생했습니다.')
               }
-            } catch (parseError) {
+            } catch {
               console.warn('Failed to parse SSE data:', line)
             }
           }
@@ -225,7 +227,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
           type: 'assistant',
           content: `블록이 성공적으로 생성되었습니다!\n\n**요약:** ${result.data.summary}`,
           timestamp: new Date(),
-          blockData: result.data
+          blockData: {
+            code: result.data.code || '코드가 없습니다.',
+            summary: result.data.summary || '요약이 없습니다.',
+            settings: result.data.settings || [],
+            property: result.data.property || {}
+          }
         }
       } else {
         assistantMessage = {
@@ -305,7 +312,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
       
       const assistantMessageId = Date.now().toString()
       let fullContent = ''
-      let blockData: any = null
+      let blockData: BlockData | null = null
 
       while (true) {
         const { done, value } = await reader.read()
@@ -329,14 +336,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
                   }
                   break
 
+                case 'codeToken':
+                  // 실시간 코드 스트리밍 표시
+                  if (event.content && typeof event.content === 'string') {
+                    fullContent += event.content
+                    setCurrentResponse(fullContent)
+                  }
+                  break
+
+                case 'codeSectionComplete':
+                  // 코드 섹션 완료 표시
+                  setStatus(prev => ({ ...prev, currentStatus: '코드 생성 완료, 설정 생성 중...' }))
+                  break
+
                 case 'complete':
                   // 구조화된 블록 데이터 처리
                   if (typeof event.content === 'object' && event.content) {
                     blockData = {
-                      code: event.content.code,
-                      summary: event.content.summary,
-                      settings: [],
-                      property: {}
+                      code: event.content.code || '코드가 없습니다.',
+                      summary: event.content.summary || '요약이 없습니다.',
+                      settings: event.content.settings || [],
+                      property: event.content.property || {}
                     }
                   } else {
                     // JSON 파싱 시도 (fallback)
@@ -348,10 +368,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
                       
                       const parsed = JSON.parse(cleanedContent)
                       blockData = {
-                        code: parsed.code,
-                        summary: parsed.summary,
-                        settings: [],
-                        property: {}
+                        code: parsed.code || '코드가 없습니다.',
+                        summary: parsed.summary || '요약이 없습니다.',
+                        settings: parsed.settings || [],
+                        property: parsed.property || {}
                       }
                     } catch (parseError) {
                       console.warn('JSON 파싱 실패, 원본 응답 사용:', parseError)
@@ -365,50 +385,54 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
                   }
                   
                   // 최종 메시지 추가
-                  const finalMessage: ChatMessage = {
+                  {
+                    const finalMessage: ChatMessage = {
                     id: assistantMessageId,
                     type: 'assistant',
                     content: blockData.summary,
                     timestamp: new Date(),
                     blockData: blockData
                   }
-                  setMessages(prev => [...prev, finalMessage])
-                  setCurrentResponse('')
-                  setStatus({ isStreaming: false, currentStatus: '' })
-                  
-                  // BlockId 업데이트 (자동 생성된 경우)
-                  if (!blockId.trim()) {
-                    setBlockId(currentBlockId)
+                    setMessages(prev => [...prev, finalMessage])
+                    setCurrentResponse('')
+                    setStatus({ isStreaming: false, currentStatus: '' })
+                    
+                    // BlockId 업데이트 (자동 생성된 경우)
+                    if (!blockId.trim()) {
+                      setBlockId(currentBlockId)
+                    }
+                    
+                    // 완료 후 입력 필드에 포커스
+                    setTimeout(() => {
+                      textareaRef.current?.focus()
+                    }, 100)
                   }
-                  
-                  // 완료 후 입력 필드에 포커스
-                  setTimeout(() => {
-                    textareaRef.current?.focus()
-                  }, 100)
                   break
 
                 case 'outOfScope':
                   // 블록 생성 범위가 아닌 요청에 대한 안내
-                  const outOfScopeMessage: ChatMessage = {
+                  {
+                    const outOfScopeMessage: ChatMessage = {
                     id: assistantMessageId,
                     type: 'assistant',
                     content: event.content as string,
                     timestamp: new Date()
                   }
-                  setMessages(prev => [...prev, outOfScopeMessage])
-                  setCurrentResponse('')
-                  setStatus({ isStreaming: false, currentStatus: '' })
-                  
-                  // 완료 후 입력 필드에 포커스
-                  setTimeout(() => {
-                    textareaRef.current?.focus()
-                  }, 100)
+                    setMessages(prev => [...prev, outOfScopeMessage])
+                    setCurrentResponse('')
+                    setStatus({ isStreaming: false, currentStatus: '' })
+                    
+                    // 완료 후 입력 필드에 포커스
+                    setTimeout(() => {
+                      textareaRef.current?.focus()
+                    }, 100)
+                  }
                   break
 
                 case 'error':
                   throw new Error(event.content as string || '블록 생성 중 오류가 발생했습니다.')
               }
-            } catch (parseError) {
+            } catch {
               console.warn('Failed to parse SSE data:', line)
             }
           }
@@ -557,13 +581,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
                   <div className="block-info">
                     <p><strong>코드 길이:</strong> {message.blockData.code.length} characters</p>
                     <p><strong>설정 항목:</strong> {message.blockData.settings.length} items</p>
+                    <p><strong>속성 개수:</strong> {Object.keys(message.blockData.property || {}).length} properties</p>
                     <details>
                       <summary>생성된 코드 보기</summary>
                       <pre className="block-code">{message.blockData.code}</pre>
                     </details>
                     <details>
-                      <summary>설정 정보 보기</summary>
-                      <pre className="block-settings">{JSON.stringify(message.blockData.settings, null, 2)}</pre>
+                      <summary>설정 정보 보기 ({message.blockData.settings.length}개 항목)</summary>
+                      <pre className="block-settings">
+                        {message.blockData.settings.length > 0 
+                          ? JSON.stringify(message.blockData.settings, null, 2)
+                          : '설정 정보가 없습니다.'
+                        }
+                      </pre>
+                    </details>
+                    <details>
+                      <summary>속성 정보 보기 ({Object.keys(message.blockData.property || {}).length}개 속성)</summary>
+                      <pre className="block-property">
+                        {Object.keys(message.blockData.property || {}).length > 0
+                          ? JSON.stringify(message.blockData.property, null, 2)
+                          : '속성 정보가 없습니다.'
+                        }
+                      </pre>
                     </details>
                   </div>
                 </div>
@@ -614,7 +653,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
             ref={textareaRef}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             placeholder={
               chatMode === 'rag' 
                 ? "질문을 입력하세요... (Enter: 전송, Shift+Enter: 줄바꿈)" 

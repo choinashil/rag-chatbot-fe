@@ -72,10 +72,12 @@ export type ChatMode = 'rag' | 'block-rest' | 'block-sse'
 
 // SSE 블록 스트리밍 이벤트
 export interface BlockStreamingEvent {
-  type: 'token' | 'complete' | 'error' | 'outOfScope'
+  type: 'token' | 'complete' | 'error' | 'outOfScope' | 'codeToken' | 'codeSectionComplete'
   content?: string | {
     code: string
     summary: string
+    settings: any[]
+    property: Record<string, any>
   }
   data?: {
     code?: string
