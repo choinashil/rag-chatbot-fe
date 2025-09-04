@@ -17,10 +17,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
     currentStatus: ''
   })
   const [currentResponse, setCurrentResponse] = useState('')
-  const [chatMode, setChatMode] = useState<ChatMode>('block-sse')
-  const [blockId, setBlockId] = useState('')
-  const [storeId, setStoreId] = useState('demo-store')
-  const [userId, setUserId] = useState('demo-user')
+  const [chatMode, setChatMode] = useState<ChatMode>('block-rest')
+  const [blockId, setBlockId] = useState('block')
+  const [storeId, setStoreId] = useState('store')
+  const [userId, setUserId] = useState('user')
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -519,7 +519,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
                 type="text"
                 value={storeId}
                 onChange={(e) => setStoreId(e.target.value)}
-                placeholder="demo-store"
+                placeholder="store"
                 disabled={status.isStreaming}
               />
             </div>
@@ -530,7 +530,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
                 type="text"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                placeholder="demo-user"
+                placeholder="user"
                 disabled={status.isStreaming}
               />
             </div>
